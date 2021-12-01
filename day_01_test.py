@@ -4,6 +4,8 @@ from day_01 import part_1, part_2
 
 
 class TestDay01(TestCase):
+    _depths: list[int]
+
     def setUp(self):
         self._depths = [199, 200, 208, 210, 200, 207, 240, 269, 260, 263]
 
