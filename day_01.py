@@ -18,11 +18,10 @@ def part_1(depths: Iterable[int]) -> int:
 def part_2(depths: Iterable[int]) -> int:
     a: Iterator[int]
     b: Iterator[int]
-    c: Iterator[int]
 
-    a, b, c = tee(depths, 3)
+    a, b = tee(depths)
 
-    return part_1(map(sum, zip(a, islice(b, 1, None), islice(c, 2, None))))
+    return sum(map(lt, a, islice(b, 3, None)))
 
 
 if __name__ == '__main__':
