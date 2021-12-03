@@ -15,7 +15,6 @@ def part_1(commands: Iterable[str]) -> int:
 
     command: str
     units: str
-
     for command, units in map(str.split, commands):
         units: int = int(units)
 
@@ -37,7 +36,6 @@ def part_2(commands: Iterable[str]) -> int:
 
     command: str
     units: str
-
     for command, units in map(str.split, commands):
         units: int = int(units)
 
