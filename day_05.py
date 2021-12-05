@@ -2,8 +2,6 @@ import fileinput
 from collections import namedtuple
 
 import numpy as np
-# noinspection PyProtectedMember
-from numpy.lib.stride_tricks import as_strided
 
 Point = namedtuple('Point', 'x, y')
 Segment = namedtuple('Segment', 'a, b')
@@ -41,13 +39,17 @@ def count_overlapping_coordinates(segments: list[Segment], include_diagonals: bo
             matrix[segment.a.y, segment.a.x:segment.b.x + 1] += 1
         elif include_diagonals:
             if segment.a.y < segment.b.y:
-                window = matrix[segment.a.y:, segment.a.x:]
-                as_strided(window, (segment.b.y - segment.a.y + 1,), (matrix.shape[1] + 1,))[:] += 1
+                matrix.flat[segment.a.y * matrix.shape[1] + segment.a.x:
+                            segment.b.y * matrix.shape[1] + segment.b.x + 1:
+                            matrix.shape[1] + 1] += 1
             else:
-                window = matrix[segment.b.y:, segment.b.x:]
-                as_strided(window, (segment.a.y - segment.b.y + 1,), (matrix.shape[1] - 1,))[:] += 1
+                matrix.flat[segment.b.y * matrix.shape[1] + segment.b.x:
+                            segment.a.y * matrix.shape[1] + segment.a.x + 1:
+                            matrix.shape[1] - 1] += 1
 
-    return (matrix >= 2).sum()
+    matrix &= 0b1111_1110
+
+    return np.count_nonzero(matrix)
 
 
 def part_1(segments: list[Segment]) -> int:
