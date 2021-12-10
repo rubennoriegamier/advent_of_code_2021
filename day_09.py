@@ -3,8 +3,6 @@ from bisect import insort
 from functools import partial
 
 import numpy as np
-# noinspection PyProtectedMember
-from numpy.lib.stride_tricks import as_strided
 
 
 def main():
@@ -15,66 +13,55 @@ def main():
 
 
 def part_1(heights: list[list[int]]) -> int:
-    height = len(heights)
-    width = len(heights[0])
-    height_with_pad = height + 2
-    width_with_pad = width + 2
+    heights_ = np.asarray(heights, np.byte)
+    mask = np.ones_like(heights_, bool)
 
-    heights_ = np.full((height_with_pad, width_with_pad), 127, np.byte)
-    heights_[1:-1, 1:-1] = heights
+    np.less(heights_[1:], heights_[:-1], out=mask[1:], where=mask[1:])
+    np.less(heights_[:, 1:], heights_[:, :-1], out=mask[:, 1:], where=mask[:, 1:])
+    np.less(heights_[:, :-1], heights_[:, 1:], out=mask[:, :-1], where=mask[:, :-1])
+    np.less(heights_[:-1], heights_[1:], out=mask[:-1], where=mask[:-1])
 
-    lower_adjacent = as_strided(heights_.flat[1:], (height, width, 2, 2),
-                                (width_with_pad, 1, width_with_pad + 1, width_with_pad - 1)) \
-        .min((2, 3), initial=127).reshape((height, -1))
-    mask = np.less(heights_[1:-1, 1:-1], lower_adjacent)
+    heights_ += 1
 
-    return (heights_[1:-1, 1:-1][mask] + 1).sum()
+    return heights_.sum(where=mask)
 
 
 def part_2(heights: list[list[int]]) -> int:
-    height = len(heights)
-    width = len(heights[0])
-    height_with_pad = height + 2
-    width_with_pad = width + 2
+    heights_ = np.asarray(heights, np.byte)
+    mask = np.ones_like(heights_, bool)
 
-    heights_ = np.full((height_with_pad, width_with_pad), 127, np.byte)
-    heights_[1:-1, 1:-1] = heights
+    np.less(heights_[1:], heights_[:-1], out=mask[1:], where=mask[1:])
+    np.less(heights_[:, 1:], heights_[:, :-1], out=mask[:, 1:], where=mask[:, 1:])
+    np.less(heights_[:, :-1], heights_[:, 1:], out=mask[:, :-1], where=mask[:, :-1])
+    np.less(heights_[:-1], heights_[1:], out=mask[:-1], where=mask[:-1])
 
-    lower_adjacent = as_strided(heights_.flat[1:], (height, width, 2, 2),
-                                (width_with_pad, 1, width_with_pad + 1, width_with_pad - 1)) \
-        .min((2, 3), initial=127).reshape((height, -1))
-    mask = np.less(heights_[1:-1, 1:-1], lower_adjacent)
-    indexes = np.transpose(np.nonzero(mask))
-    indexes += 1
-
-    def go_up(y_: int, x_: int) -> int:
-        if heights_[y_, x_] < heights_[y_ - 1, x_] < 9 and not mask[y_ - 2, x_ - 1]:
-            mask[y_ - 2, x_ - 1] = True
-            return 1 + go_up(y_ - 1, x_) + go_left(y_ - 1, x_) + go_right(y_ - 1, x_)
-        return 0
-
-    def go_down(y_: int, x_: int) -> int:
-        if heights_[y_, x_] < heights_[y_ + 1, x_] < 9 and not mask[y_, x_ - 1]:
-            mask[y_, x_ - 1] = True
-            return 1 + go_down(y_ + 1, x_) + go_left(y_ + 1, x_) + go_right(y_ + 1, x_)
-        return 0
-
-    def go_left(y_: int, x_: int) -> int:
-        if heights_[y_, x_] < heights_[y_, x_ - 1] < 9 and not mask[y_ - 1, x_ - 2]:
-            mask[y_ - 1, x_ - 2] = True
-            return 1 + go_up(y_, x_ - 1) + go_down(y_, x_ - 1) + go_left(y_, x_ - 1)
-        return 0
-
-    def go_right(y_: int, x_: int) -> int:
-        if heights_[y_, x_] < heights_[y_, x_ + 1] < 9 and not mask[y_ - 1, x_]:
-            mask[y_ - 1, x_] = True
-            return 1 + go_up(y_, x_ + 1) + go_down(y_, x_ + 1) + go_right(y_, x_ + 1)
-        return 0
-
+    max_y = heights_.shape[0] - 1
+    max_x = heights_.shape[1] - 1
     sizes = []
 
-    for y, x in indexes:
-        insort(sizes, 1 + go_up(y, x) + go_down(y, x) + go_left(y, x) + go_right(y, x))
+    for y, x in zip(*np.nonzero(mask)):
+        mask[y, x] = False
+        size = 0
+        stack = [(y, x)]
+
+        while stack:
+            y_, x_ = stack.pop()
+
+            if not mask[y_, x_]:
+                mask[y_, x_] = True
+                size += 1
+                height = heights_[y_, x_]
+
+                if y_ > 0 and height < heights_[y_ - 1, x_] < 9:
+                    stack.append((y_ - 1, x_))
+                if y_ < max_y and height < heights_[y_ + 1, x_] < 9:
+                    stack.append((y_ + 1, x_))
+                if x_ > 0 and height < heights_[y_, x_ - 1] < 9:
+                    stack.append((y_, x_ - 1))
+                if x_ < max_x and height < heights_[y_, x_ + 1] < 9:
+                    stack.append((y_, x_ + 1))
+
+        insort(sizes, size)
 
     return sizes[-1] * sizes[-2] * sizes[-3]
 
