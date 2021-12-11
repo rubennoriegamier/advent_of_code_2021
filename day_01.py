@@ -3,7 +3,7 @@ from operator import lt
 
 
 def main():
-    depths = list(map(int, fileinput.input()))
+    depths: list[int] = list(map(int, fileinput.input()))
 
     print(part_1(depths))
     print(part_2(depths))
