@@ -2,8 +2,6 @@ import fileinput
 from functools import partial
 from itertools import count
 
-import numpy as np
-
 
 def main():
     energy_levels: list[list[int]] = list(map(list, map(partial(map, int), map(str.rstrip, fileinput.input()))))
@@ -12,66 +10,153 @@ def main():
     print(part_2(energy_levels))
 
 
-def part_1(energy_levels: list[list[int]]) -> int:
-    energy_levels_ = np.asarray(energy_levels, np.byte)
-    flashes_mask = np.empty_like(energy_levels_, bool)
-    aux_mask = np.empty_like(energy_levels_, bool)
-    flashes_count = 0
+# noinspection PyTypeChecker
+def part_1(energies: list[list[int]]) -> int:
+    max_y = len(energies) - 1
+    max_x = len(energies[0]) - 1
+    energies = list(map(list.copy, energies))
+    flashes = 0
 
     for _ in range(100):
-        energy_levels_ += 1
+        stack = []
 
-        flashes_mask[:] = False
-        np.equal(energy_levels_, 10, out=aux_mask)
+        for y, row in enumerate(energies):
+            for x in range(len(row)):
+                if row[x] == 9:
+                    stack.append((y, x))
+                else:
+                    row[x] += 1
 
-        while aux_mask.any():
-            energy_levels_[1:, 1:][aux_mask[:-1, :-1]] += 1
-            energy_levels_[1:][aux_mask[:-1]] += 1
-            energy_levels_[1:, :-1][aux_mask[:-1, 1:]] += 1
-            energy_levels_[:, 1:][aux_mask[:, :-1]] += 1
-            energy_levels_[:, :-1][aux_mask[:, 1:]] += 1
-            energy_levels_[:-1, 1:][aux_mask[1:, :-1]] += 1
-            energy_levels_[:-1][aux_mask[1:]] += 1
-            energy_levels_[:-1, :-1][aux_mask[1:, 1:]] += 1
+        while stack:
+            y, x = stack.pop()
 
-            np.logical_or(flashes_mask, aux_mask, out=flashes_mask)
-            np.logical_not(flashes_mask, out=aux_mask)
-            np.greater_equal(energy_levels_, 10, out=aux_mask, where=aux_mask)
+            if energies[y][x] > 0:
+                energies[y][x] += 1
+                if energies[y][x] == 10:
+                    flashes += 1
+                    energies[y][x] = 0
 
-        energy_levels_[flashes_mask] = 0
-        flashes_count += np.count_nonzero(flashes_mask)
+                    if y == 0:
+                        stack.append((y + 1, x))
+                        if x == 0:
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x + 1))
+                        elif x == max_x:
+                            stack.append((y, x - 1))
+                            stack.append((y + 1, x - 1))
+                        else:
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x - 1))
+                            stack.append((y + 1, x + 1))
+                    elif y == max_y:
+                        stack.append((y - 1, x))
+                        if x == 0:
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x + 1))
+                        elif x == max_x:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y, x - 1))
+                        else:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                    else:
+                        stack.append((y - 1, x))
+                        stack.append((y + 1, x))
+                        if x == 0:
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x + 1))
+                        elif x == max_x:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y, x - 1))
+                            stack.append((y + 1, x - 1))
+                        else:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x - 1))
+                            stack.append((y + 1, x + 1))
 
-    return flashes_count
+    return flashes
 
 
-def part_2(energy_levels: list[list[int]]) -> int:
-    energy_levels_ = np.asarray(energy_levels, np.byte)
-    flashes_mask = np.empty_like(energy_levels_, bool)
-    aux_mask = np.empty_like(energy_levels_, bool)
+# noinspection PyTypeChecker
+def part_2(energies: list[list[int]]) -> int:
+    max_y = len(energies) - 1
+    max_x = len(energies[0]) - 1
+    size = len(energies) * len(energies[0])
+    energies = list(map(list.copy, energies))
 
     for n in count(1):
-        energy_levels_ += 1
+        flashes = 0
+        stack = []
 
-        flashes_mask[:] = False
-        np.equal(energy_levels_, 10, out=aux_mask)
+        for y, row in enumerate(energies):
+            for x in range(len(row)):
+                if row[x] == 9:
+                    stack.append((y, x))
+                else:
+                    row[x] += 1
 
-        while aux_mask.any():
-            energy_levels_[1:, 1:][aux_mask[:-1, :-1]] += 1
-            energy_levels_[1:][aux_mask[:-1]] += 1
-            energy_levels_[1:, :-1][aux_mask[:-1, 1:]] += 1
-            energy_levels_[:, 1:][aux_mask[:, :-1]] += 1
-            energy_levels_[:, :-1][aux_mask[:, 1:]] += 1
-            energy_levels_[:-1, 1:][aux_mask[1:, :-1]] += 1
-            energy_levels_[:-1][aux_mask[1:]] += 1
-            energy_levels_[:-1, :-1][aux_mask[1:, 1:]] += 1
+        while stack:
+            y, x = stack.pop()
 
-            np.logical_or(flashes_mask, aux_mask, out=flashes_mask)
-            np.logical_not(flashes_mask, out=aux_mask)
-            np.greater_equal(energy_levels_, 10, out=aux_mask, where=aux_mask)
+            if energies[y][x] > 0:
+                energies[y][x] += 1
+                if energies[y][x] == 10:
+                    flashes += 1
+                    energies[y][x] = 0
 
-        energy_levels_[flashes_mask] = 0
+                    if y == 0:
+                        stack.append((y + 1, x))
+                        if x == 0:
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x + 1))
+                        elif x == max_x:
+                            stack.append((y, x - 1))
+                            stack.append((y + 1, x - 1))
+                        else:
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x - 1))
+                            stack.append((y + 1, x + 1))
+                    elif y == max_y:
+                        stack.append((y - 1, x))
+                        if x == 0:
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x + 1))
+                        elif x == max_x:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y, x - 1))
+                        else:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                    else:
+                        stack.append((y - 1, x))
+                        stack.append((y + 1, x))
+                        if x == 0:
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x + 1))
+                        elif x == max_x:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y, x - 1))
+                            stack.append((y + 1, x - 1))
+                        else:
+                            stack.append((y - 1, x - 1))
+                            stack.append((y - 1, x + 1))
+                            stack.append((y, x - 1))
+                            stack.append((y, x + 1))
+                            stack.append((y + 1, x - 1))
+                            stack.append((y + 1, x + 1))
 
-        if np.count_nonzero(flashes_mask) == energy_levels_.size:
+        if flashes == size:
             return n
 
 
