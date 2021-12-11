@@ -1,52 +1,60 @@
 import fileinput
-from collections.abc import Iterable
 
 
 def main():
-    commands: list[str] = list(fileinput.input())
+    commands: list[Command] = list(map(Command.parse, fileinput.input()))
 
     print(part_1(commands))
     print(part_2(commands))
 
 
-def part_1(commands: Iterable[str]) -> int:
+class Command:
+    __slots__ = 'command', 'units'
+
+    command: str
+    units: int
+
+    def __init__(self, command, units):
+        self.command = command
+        self.units = units
+
+    @classmethod
+    def parse(cls, raw_command: str) -> 'Command':
+        command, raw_units = raw_command.split()
+
+        return cls(command, int(raw_units))
+
+
+def part_1(commands: list[Command]) -> int:
     horizontal_position = 0
     depth = 0
 
-    command: str
-    units: str
-    for command, units in map(str.split, commands):
-        units: int = int(units)
-
-        match command:
+    for command in commands:
+        match command.command:
             case 'forward':
-                horizontal_position += units
+                horizontal_position += command.units
             case 'down':
-                depth += units
+                depth += command.units
             case 'up':
-                depth -= units
+                depth -= command.units
 
     return depth * horizontal_position
 
 
-def part_2(commands: Iterable[str]) -> int:
+def part_2(commands: list[Command]) -> int:
     horizontal_position = 0
     depth = 0
     aim = 0
 
-    command: str
-    units: str
-    for command, units in map(str.split, commands):
-        units: int = int(units)
-
-        match command:
+    for command in commands:
+        match command.command:
             case 'forward':
-                horizontal_position += units
-                depth += aim * units
+                horizontal_position += command.units
+                depth += aim * command.units
             case 'down':
-                aim += units
+                aim += command.units
             case 'up':
-                aim -= units
+                aim -= command.units
 
     return depth * horizontal_position
 
