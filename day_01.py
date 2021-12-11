@@ -1,6 +1,4 @@
 import fileinput
-from collections.abc import Iterable
-from itertools import islice, pairwise, starmap, tee
 from operator import lt
 
 
@@ -11,14 +9,12 @@ def main():
     print(part_2(depths))
 
 
-def part_1(depths: Iterable[int]) -> int:
-    return sum(starmap(lt, pairwise(depths)))
+def part_1(depths: list[int]) -> int:
+    return sum(map(lt, depths, depths[1:]))
 
 
-def part_2(depths: Iterable[int]) -> int:
-    a, b = tee(depths)
-
-    return sum(map(lt, a, islice(b, 3, None)))
+def part_2(depths: list[int]) -> int:
+    return sum(map(lt, depths, depths[3:]))
 
 
 if __name__ == '__main__':
