@@ -1,7 +1,7 @@
 import fileinput
-from collections import defaultdict, deque
+from collections import defaultdict
 from collections.abc import Iterable
-from itertools import takewhile
+from functools import partial, cache
 from operator import methodcaller
 
 Connections = defaultdict[str, list[str]]
@@ -27,50 +27,43 @@ def parse_connections(raw_connections: Iterable[str]) -> Connections:
 
 
 def part_1(connections: Connections) -> int:
-    visited = set()
-
-    def move(curr_cave):
+    @cache
+    def move(visited: tuple[str], curr_cave: str) -> int:
         if curr_cave == 'end':
             return 1
 
         paths = 0
 
         if curr_cave.islower():
-            visited.add(curr_cave)
+            visited += (curr_cave,)
         for next_cave in connections[curr_cave]:
             if next_cave.isupper() or next_cave not in visited:
-                paths += move(next_cave)
-        if curr_cave.islower():
-            visited.remove(curr_cave)
+                paths += move(visited, next_cave)
 
         return paths
 
-    return sum(map(move, connections['start']))
+    return sum(map(partial(move, ()), connections['start']))
 
 
 def part_2(connections: Connections) -> int:
-    visited = deque()
-
-    def move(curr_cave: str, double_visit: bool = False) -> int:
+    @cache
+    def move(visited: tuple[str], curr_cave: str, double_visit: bool = False) -> int:
         if curr_cave == 'end':
             return 1
 
         paths = 0
 
-        visited.appendleft(curr_cave)
+        if curr_cave.islower():
+            visited += (curr_cave,)
         for next_cave in connections[curr_cave]:
-            if next_cave.isupper():
-                if all(map(next_cave.__ne__, takewhile(str.isupper, visited))):
-                    paths += move(next_cave, double_visit=double_visit)
-            elif next_cave not in visited:
-                paths += move(next_cave, double_visit=double_visit)
+            if next_cave.isupper() or next_cave not in visited:
+                paths += move(visited, next_cave, double_visit)
             elif not double_visit:
-                paths += move(next_cave, double_visit=True)
-        del visited[0]
+                paths += move(visited, next_cave, True)
 
         return paths
 
-    return sum(map(move, connections['start']))
+    return sum(map(partial(move, ()), connections['start']))
 
 
 if __name__ == '__main__':
