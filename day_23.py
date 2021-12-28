@@ -72,8 +72,7 @@ def part_1(aa, bb, cc, dd):
                             path = shortest_path(n, (y, room_x))
                             if not any(map(occupied.__contains__, path)):
                                 args[nn_idx] = tuple(sorted(chain(nn[:n_idx], path[-1:], nn[n_idx + 1:])))
-                                energy = min(energy, len(path) * weight + solve(*args))
-                            break
+                                return min(energy, len(path) * weight + solve(*args))
 
         return energy
 
