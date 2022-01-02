@@ -11,7 +11,6 @@ IS_LIGHT = partial(eq, '#')
 
 def main():
     algorithm = parse_algorithm(input())
-    print(algorithm)
     input()
     image = parse_image(map(str.rstrip, fileinput.input()))
 
