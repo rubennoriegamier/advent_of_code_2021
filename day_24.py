@@ -32,14 +32,24 @@ def part_1_and_2(instructions, part):
             range_ = range(1, 10)
         case _:
             raise NotImplementedError()
+    ones = 0
 
     @cache
     def solve(idx, w, z):
+        nonlocal ones
+        one = False
+
         # noinspection PyTypeChecker
         if z % 26 + operands[idx][4] == w:
             z //= operands[idx][3]
         else:
             z = z // operands[idx][3] * 26 + (w + operands[idx][14])
+
+            if ones == 7:
+                return
+
+            ones += 1
+            one = True
 
         if idx == 13:
             if z == 0:
@@ -50,6 +60,8 @@ def part_1_and_2(instructions, part):
 
                 if partial_solution:
                     return f'{w}{partial_solution}'
+        if one:
+            ones -= 1
 
     return int(next(filter(None, (solve(0, digit, 0) for digit in range_))))
 
