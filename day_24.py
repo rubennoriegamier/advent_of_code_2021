@@ -1,5 +1,6 @@
 import fileinput
-from functools import cache
+from functools import cache, partial
+from operator import itemgetter
 
 from more_itertools import split_at
 
@@ -22,7 +23,8 @@ def parse_instruction(raw_instruction):
 
 
 def part_1_and_2(instructions, part):
-    instruction_groups = list(split_at(instructions, lambda instruction: instruction[0] == 'inp'))[1:]
+    operands = list(map(list, map(partial(map, itemgetter(2)),
+                                  split_at(instructions, lambda instruction: instruction[0] == 'inp'))))[1:]
     match part:
         case 1:
             range_ = range(9, 0, -1)
@@ -32,183 +34,24 @@ def part_1_and_2(instructions, part):
             raise NotImplementedError()
 
     @cache
-    def solve(idx, w, x, y, z):
-        for instruction in instruction_groups[idx]:
-            match instruction[0]:
-                case 'add':
-                    match instruction[1]:
-                        case 'x':
-                            match instruction[2]:
-                                case 'w':
-                                    x += w
-                                case 'y':
-                                    x += y
-                                case 'z':
-                                    x += z
-                                case _:
-                                    x += instruction[2]
-                        case 'y':
-                            match instruction[2]:
-                                case 'w':
-                                    y += w
-                                case 'x':
-                                    y += x
-                                case 'z':
-                                    y += z
-                                case _:
-                                    y += instruction[2]
-                        case 'z':
-                            match instruction[2]:
-                                case 'w':
-                                    z += w
-                                case 'x':
-                                    z += x
-                                case 'y':
-                                    z += y
-                                case _:
-                                    z += instruction[2]
-                case 'mul':
-                    match instruction[1]:
-                        case 'x':
-                            match instruction[2]:
-                                case 'w':
-                                    x *= w
-                                case 'y':
-                                    x *= y
-                                case 'z':
-                                    x *= z
-                                case _:
-                                    x *= instruction[2]
-                        case 'y':
-                            match instruction[2]:
-                                case 'w':
-                                    y *= w
-                                case 'x':
-                                    y *= x
-                                case 'z':
-                                    y *= z
-                                case _:
-                                    y *= instruction[2]
-                        case 'z':
-                            match instruction[2]:
-                                case 'w':
-                                    z *= w
-                                case 'x':
-                                    z *= x
-                                case 'y':
-                                    z *= y
-                                case _:
-                                    z *= instruction[2]
-                case 'div':
-                    match instruction[1]:
-                        case 'x':
-                            match instruction[2]:
-                                case 'w':
-                                    x //= w
-                                case 'y':
-                                    x //= y
-                                case 'z':
-                                    x //= z
-                                case _:
-                                    x //= instruction[2]
-                        case 'y':
-                            match instruction[2]:
-                                case 'w':
-                                    y //= w
-                                case 'x':
-                                    y //= x
-                                case 'z':
-                                    y //= z
-                                case _:
-                                    y //= instruction[2]
-                        case 'z':
-                            match instruction[2]:
-                                case 'w':
-                                    z //= w
-                                case 'x':
-                                    z //= x
-                                case 'y':
-                                    z //= y
-                                case _:
-                                    z //= instruction[2]
-                case 'mod':
-                    match instruction[1]:
-                        case 'x':
-                            match instruction[2]:
-                                case 'w':
-                                    x %= w
-                                case 'y':
-                                    x %= y
-                                case 'z':
-                                    x %= z
-                                case _:
-                                    x %= instruction[2]
-                        case 'y':
-                            match instruction[2]:
-                                case 'w':
-                                    y %= w
-                                case 'x':
-                                    y %= x
-                                case 'z':
-                                    y %= z
-                                case _:
-                                    y %= instruction[2]
-                        case 'z':
-                            match instruction[2]:
-                                case 'w':
-                                    z %= w
-                                case 'x':
-                                    z %= x
-                                case 'y':
-                                    z %= y
-                                case _:
-                                    z %= instruction[2]
-                case 'eql':
-                    match instruction[1]:
-                        case 'x':
-                            match instruction[2]:
-                                case 'w':
-                                    x = int(x == w)
-                                case 'y':
-                                    x = int(x == y)
-                                case 'z':
-                                    x = int(x == z)
-                                case _:
-                                    x = int(x == instruction[2])
-                        case 'y':
-                            match instruction[2]:
-                                case 'w':
-                                    y = int(y == w)
-                                case 'x':
-                                    y = int(y == x)
-                                case 'z':
-                                    y = int(y == z)
-                                case _:
-                                    y = int(y == instruction[2])
-                        case 'z':
-                            match instruction[2]:
-                                case 'w':
-                                    z = int(z == w)
-                                case 'x':
-                                    z = int(z == x)
-                                case 'y':
-                                    z = int(z == y)
-                                case _:
-                                    z = int(z == instruction[2])
+    def solve(idx, w, z):
+        # noinspection PyTypeChecker
+        if z % 26 + operands[idx][4] == w:
+            z //= operands[idx][3]
+        else:
+            z = z // operands[idx][3] * 26 + (w + operands[idx][14])
 
         if idx == 13:
             if z == 0:
                 return w
         else:
             for digit_ in range_:
-                result_ = solve(idx + 1, digit_, x, y, z)
-                if result_:
-                    return f'{w}{result_}'
+                partial_solution = solve(idx + 1, digit_, z)
 
-    for digit in range_:
-        result = solve(0, digit, 0, 0, 0)
-        if result:
-            return int(result)
+                if partial_solution:
+                    return f'{w}{partial_solution}'
+
+    return int(next(filter(None, (solve(0, digit, 0) for digit in range_))))
 
 
 if __name__ == '__main__':
